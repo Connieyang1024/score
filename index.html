@@ -34,17 +34,21 @@
         th {
             background-color: #f4f4f4;
         }
-        .add-row {
+        .button-container {
             margin-top: 10px;
+        }
+        button {
             padding: 10px;
             font-size: 16px;
             cursor: pointer;
+            margin-right: 10px;
         }
     </style>
 </head>
 <body>
     <h1>打分表</h1>
-    <label>from <input type="number" id="year" placeholder="年"> 年 
+    <label>from 
+        <input type="number" id="year" placeholder="年"> 年 
         <input type="number" id="month" placeholder="月"> 月 
         <input type="number" id="day" placeholder="日"> 日
     </label>
@@ -79,9 +83,39 @@
         </tbody>
     </table>
 
-    <button class="add-row" onclick="addRow()">增加一行</button>
+    <div class="button-container">
+        <button onclick="addRow()">增加一行</button>
+        <button onclick="exportToImage()">导出为图片</button>
+    </div>
 
     <script>
+        // 自动保存功能
+        document.addEventListener('input', () => {
+            const rows = document.querySelectorAll("#scoreTable tbody tr");
+            const tableData = [];
+            rows.forEach(row => {
+                const cells = row.querySelectorAll("td");
+                const rowData = Array.from(cells).slice(1).map(cell => cell.innerText);
+                tableData.push(rowData);
+            });
+            localStorage.setItem('scoreTableData', JSON.stringify(tableData));
+        });
+
+        // 读取保存的数据
+        window.addEventListener('load', () => {
+            const savedData = JSON.parse(localStorage.getItem('scoreTableData'));
+            if (savedData) {
+                const rows = document.querySelectorAll("#scoreTable tbody tr");
+                savedData.forEach((rowData, index) => {
+                    const cells = rows[index].querySelectorAll("td");
+                    rowData.forEach((text, cellIndex) => {
+                        cells[cellIndex + 1].innerText = text;
+                    });
+                });
+            }
+        });
+
+        // 增加新行
         function addRow() {
             const table = document.getElementById('scoreTable').getElementsByTagName('tbody')[0];
             const newRow = table.insertRow();
@@ -95,6 +129,19 @@
                 <td contenteditable="true"></td>
                 <td contenteditable="true"></td>
             `;
+        }
+
+        // 导出为图片
+        async function exportToImage() {
+            const table = document.getElementById('scoreTable');
+            const html2canvas = await import('https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js');
+            
+            html2canvas.default(table).then(canvas => {
+                const link = document.createElement('a');
+                link.download = '打分表.png';
+                link.href = canvas.toDataURL('image/png');
+                link.click();
+            });
         }
     </script>
 </body>
