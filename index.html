@@ -1,11 +1,113 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="zh">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>打分表</title>
+    <title>宝宝行为打分表</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            background-color: #fff;
+            padding: 20px;
+        }
+        h1 {
+            font-size: 2em;
+            margin-bottom: 10px;
+        }
+        .date {
+            text-align: right;
+            margin-bottom: 20px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+        th, td {
+            border: 1px solid #000;
+            padding: 10px;
+            text-align: center;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        .error {
+            color: red;
+        }
+        .correct {
+            color: blue;
+        }
+        input {
+            width: 100%;
+            border: none;
+            outline: none;
+            text-align: center;
+        }
+        button {
+            padding: 10px 20px;
+            font-size: 1em;
+            cursor: pointer;
+        }
+    </style>
 </head>
 <body>
-    <h1>这是测试网页，成功上线啦！</h1>
+
+    <h1>宝宝行为打分表</h1>
+
+    <div class="date">
+        from：<input type="text" placeholder="年" style="width: 50px;">
+        <input type="text" placeholder="月" style="width: 50px;">
+        <input type="text" placeholder="日" style="width: 50px;">
+    </div>
+
+    <table id="scoreTable">
+        <thead>
+            <tr>
+                <th>序号</th>
+                <th>宝宝问题</th>
+                <th class="error">错误行为</th>
+                <th class="correct">正确做法</th>
+                <th>姥姥/奶奶</th>
+                <th>姥爷/爷爷</th>
+            </tr>
+        </thead>
+        <tbody>
+            <!-- 自动生成1-17行 -->
+        </tbody>
+    </table>
+
+    <button onclick="downloadImage()">导出PNG图片</button>
+
+    <!-- 引入html2canvas库 -->
+    <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+
+    <script>
+        // 自动生成17行
+        const tbody = document.querySelector("tbody");
+        for (let i = 1; i <= 17; i++) {
+            const row = document.createElement("tr");
+            row.innerHTML = `
+                <td>${i}</td>
+                <td><input type="text" placeholder="宝宝问题"></td>
+                <td><input type="text" placeholder="错误行为"></td>
+                <td><input type="text" placeholder="正确做法"></td>
+                <td><input type="text" placeholder="姥姥/奶奶"></td>
+                <td><input type="text" placeholder="姥爷/爷爷"></td>
+            `;
+            tbody.appendChild(row);
+        }
+
+        // 导出PNG图片功能
+        function downloadImage() {
+            html2canvas(document.body).then(canvas => {
+                const link = document.createElement('a');
+                link.href = canvas.toDataURL('image/png');
+                link.download = '宝宝行为打分表.png';
+                link.click();
+            });
+        }
+    </script>
+
 </body>
 </html>
