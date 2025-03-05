@@ -4,166 +4,157 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>打分表</title>
-    <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
     <style>
         body {
             font-family: Arial, sans-serif;
+            background-color: white;
             padding: 20px;
-            max-width: 1000px;
-            margin: auto;
+        }
+        #capture {
+            background-color: white;
+            padding: 20px;
         }
         h1 {
             text-align: center;
-        }
-        .date-inputs {
             margin-bottom: 20px;
-            text-align: center;
+        }
+        label {
+            font-size: 18px;
+        }
+        input[type="number"] {
+            width: 60px;
+            font-size: 16px;
+            margin-right: 5px;
         }
         table {
             width: 100%;
             border-collapse: collapse;
-            table-layout: fixed; /* 固定表格布局 */
+            table-layout: fixed;
+            word-break: break-word;
         }
         th, td {
-            border: 1px solid #ddd;
+            border: 1px solid #000;
             padding: 10px;
-            word-break: break-word; /* 自动换行 */
+            text-align: center;
+            vertical-align: top;
         }
         th {
             background-color: #f4f4f4;
         }
-        .add-row-btn, .export-btn {
-            margin-right: 10px;
-            padding: 10px 20px;
-            cursor: pointer;
+        td {
+            height: auto;
         }
         .button-container {
-            text-align: center;
-            margin-bottom: 20px;
+            margin-top: 20px;
+        }
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            margin-right: 10px;
         }
     </style>
+    <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 </head>
 <body>
-    <h1>打分表</h1>
-
-    <div class="date-inputs">
-        <label>From: 
-            <input type="number" id="year" placeholder="年" min="1900" max="2100"> 年
-            <input type="number" id="month" placeholder="月" min="1" max="12"> 月
-            <input type="number" id="day" placeholder="日" min="1" max="31"> 日
+    <!-- 包裹打分表和日期部分，用于截图 -->
+    <div id="capture">
+        <h1>打分表</h1>
+        <label>from 
+            <input type="number" id="year" placeholder="年"> 年 
+            <input type="number" id="month" placeholder="月"> 月 
+            <input type="number" id="day" placeholder="日"> 日
         </label>
-    </div>
 
-    <div class="button-container">
-        <button class="add-row-btn" onclick="addRow()">增加行</button>
-        <button class="export-btn" onclick="exportAsImage()">导出图片</button>
-    </div>
-
-    <div id="scoreTableContainer">
         <table id="scoreTable">
             <thead>
                 <tr>
-                    <th style="width: 10%;">序号</th>
-                    <th>行为描述</th>
-                    <th style="width: 20%;">评分</th>
+                    <th style="width: 5%;">序号</th>
+                    <th style="width: 20%;">宝宝问题</th>
+                    <th style="width: 25%; color: red;">错误行为</th>
+                    <th style="width: 25%; color: blue;">正确做法</th>
+                    <th style="width: 12.5%;">姥姥/奶奶</th>
+                    <th style="width: 12.5%;">姥爷/爷爷</th>
                 </tr>
             </thead>
             <tbody>
-                <tr>
-                    <td>1</td>
-                    <td contenteditable="true"></td>
-                    <td contenteditable="true"></td>
-                </tr>
+                <script>
+                    for (let i = 1; i <= 17; i++) {
+                        document.write(`
+                            <tr>
+                                <td>${i}</td>
+                                <td contenteditable="true"></td>
+                                <td contenteditable="true"></td>
+                                <td contenteditable="true"></td>
+                                <td contenteditable="true"></td>
+                                <td contenteditable="true"></td>
+                            </tr>
+                        `);
+                    }
+                </script>
             </tbody>
         </table>
     </div>
 
-    <script>
-        // 自动编号行
-        function updateRowNumbers() {
-            const rows = document.querySelectorAll("#scoreTable tbody tr");
-            rows.forEach((row, index) => {
-                row.cells[0].textContent = index + 1;
-            });
-            saveTableData();
-        }
+    <!-- 按钮 -->
+    <div class="button-container">
+        <button onclick="addRow()">增加一行</button>
+        <button onclick="exportToImage()">导出为图片</button>
+    </div>
 
-        // 增加新行
+    <script>
+        // 自动保存功能
+        document.addEventListener('input', () => {
+            const rows = document.querySelectorAll("#scoreTable tbody tr");
+            const tableData = [];
+            rows.forEach(row => {
+                const cells = row.querySelectorAll("td");
+                const rowData = Array.from(cells).slice(1).map(cell => cell.innerText);
+                tableData.push(rowData);
+            });
+            localStorage.setItem('scoreTableData', JSON.stringify(tableData));
+        });
+
+        // 读取保存的数据
+        window.addEventListener('load', () => {
+            const savedData = JSON.parse(localStorage.getItem('scoreTableData'));
+            if (savedData) {
+                const rows = document.querySelectorAll("#scoreTable tbody tr");
+                savedData.forEach((rowData, index) => {
+                    const cells = rows[index].querySelectorAll("td");
+                    rowData.forEach((text, cellIndex) => {
+                        cells[cellIndex + 1].innerText = text;
+                    });
+                });
+            }
+        });
+
+        // 增加新行并自动编号
         function addRow() {
-            const table = document.querySelector("#scoreTable tbody");
-            const newRow = document.createElement("tr");
+            const table = document.getElementById('scoreTable').getElementsByTagName('tbody')[0];
+            const newRow = table.insertRow();
+            const rowCount = table.rows.length;
+
             newRow.innerHTML = `
-                <td></td>
+                <td>${rowCount}</td>
+                <td contenteditable="true"></td>
+                <td contenteditable="true"></td>
+                <td contenteditable="true"></td>
                 <td contenteditable="true"></td>
                 <td contenteditable="true"></td>
             `;
-            table.appendChild(newRow);
-            updateRowNumbers();
         }
 
-        // 自动保存数据到本地
-        function saveTableData() {
-            const tableData = [];
-            document.querySelectorAll("#scoreTable tbody tr").forEach(row => {
-                const cells = row.querySelectorAll("td");
-                tableData.push({
-                    description: cells[1].textContent,
-                    score: cells[2].textContent
-                });
-            });
-
-            const date = {
-                year: document.getElementById("year").value,
-                month: document.getElementById("month").value,
-                day: document.getElementById("day").value
-            };
-
-            localStorage.setItem("tableData", JSON.stringify(tableData));
-            localStorage.setItem("date", JSON.stringify(date));
-        }
-
-        // 读取本地保存的数据
-        function loadTableData() {
-            const tableData = JSON.parse(localStorage.getItem("tableData")) || [];
-            const date = JSON.parse(localStorage.getItem("date")) || {};
-
-            const tableBody = document.querySelector("#scoreTable tbody");
-            tableBody.innerHTML = "";
-
-            tableData.forEach((data, index) => {
-                const newRow = document.createElement("tr");
-                newRow.innerHTML = `
-                    <td>${index + 1}</td>
-                    <td contenteditable="true">${data.description}</td>
-                    <td contenteditable="true">${data.score}</td>
-                `;
-                tableBody.appendChild(newRow);
-            });
-
-            document.getElementById("year").value = date.year || "";
-            document.getElementById("month").value = date.month || "";
-            document.getElementById("day").value = date.day || "";
-
-            updateRowNumbers();
-        }
-
-        // 导出图片功能
-        function exportAsImage() {
-            const element = document.getElementById("scoreTableContainer");
-            html2canvas(element, { scale: 2 }).then(canvas => {
-                const link = document.createElement("a");
-                link.href = canvas.toDataURL("image/png");
-                link.download = "打分表.png";
+        // 导出为图片
+        function exportToImage() {
+            const capture = document.getElementById('capture');
+            html2canvas(capture).then(canvas => {
+                const link = document.createElement('a');
+                link.download = '打分表.png';
+                link.href = canvas.toDataURL('image/png');
                 link.click();
-            }).catch(error => {
-                console.error("导出失败：", error);
-                alert("导出图片失败，请稍后重试！");
             });
         }
-
-        // 自动保存机制
-        document.addEventListener("input", saveTableData);
-        window.addEventListener("load", loadTableData);
     </script>
 </body>
 </html>
