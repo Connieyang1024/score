@@ -1,4 +1,4 @@
-// 增加新行功能
+// 增加新行
 function addRow() {
     const table = document.getElementById('scoreTable').getElementsByTagName('tbody')[0];
     const newRow = table.insertRow();
@@ -15,42 +15,50 @@ function addRow() {
 }
 
 // 保存数据并生成链接
-function saveData() {
+function saveAndGenerateLink() {
     const rows = document.querySelectorAll("#scoreTable tbody tr");
-    const data = [];
+    const tableData = [];
 
     rows.forEach(row => {
         const cells = row.querySelectorAll("td");
         const rowData = Array.from(cells).slice(1).map(cell => cell.innerText);
-        data.push(rowData);
+        tableData.push(rowData);
     });
 
-    const date = {
-        year: document.getElementById('year').value,
-        month: document.getElementById('month').value,
-        day: document.getElementById('day').value
-    };
+    const data = JSON.stringify(tableData);
+    const encodedData = encodeURIComponent(data);
+    const uniqueKey = Date.now(); // 确保每次都有唯一标识
 
-    const payload = {
-        date: date,
-        tableData: data
-    };
+    // 生成带数据的链接
+    const baseUrl = window.location.origin + window.location.pathname;
+    const fullLink = `${baseUrl}?data=${encodedData}&key=${uniqueKey}`;
 
-    const jsonData = JSON.stringify(payload);
-    const blob = new Blob([jsonData], { type: "application/json" });
-    const link = URL.createObjectURL(blob);
+    // 显示短链接
+    const shortLink = fullLink.length > 60 ? fullLink.slice(0, 60) + "..." : fullLink;
 
-    document.getElementById('generatedLink').textContent = link;
-    document.getElementById('linkContainer').classList.remove('hidden');
+    document.getElementById("shortLink").href = fullLink;
+    document.getElementById("shortLink").textContent = shortLink;
+    document.getElementById("linkContainer").style.display = "block";
+
+    alert("请保存该链接以便下次继续填写！");
 }
 
-// 导出为图片
-function exportToImage() {
-    const table = document.getElementById('scoreTable');
-    html2canvas(table).then(canvas => {
-        const link = document.createElement('a');
-        link.download = '打分表.png';
-        link.href = canvas.toDataURL('image/png');
-        link.click();
-    });
-}
+// 页面加载时读取数据
+window.addEventListener('load', () => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const data = urlParams.get('data');
+
+    if (data) {
+        const savedData = JSON.parse(decodeURIComponent(data));
+        const rows = document.querySelectorAll("#scoreTable tbody tr");
+
+        savedData.forEach((rowData, index) => {
+            const cells = rows[index]?.querySelectorAll("td");
+            rowData.forEach((text, cellIndex) => {
+                if (cells && cells[cellIndex + 1]) {
+                    cells[cellIndex + 1].innerText = text;
+                }
+            });
+        });
+    }
+});
