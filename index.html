@@ -36,9 +36,6 @@
         th {
             background-color: #f4f4f4;
         }
-        td {
-            height: auto;
-        }
         .button-container {
             margin-top: 10px;
         }
@@ -48,20 +45,18 @@
             cursor: pointer;
             margin-right: 10px;
         }
-        .link-container {
-            margin-top: 20px;
+        .hidden {
+            display: none;
         }
-        #generatedLink {
-            font-size: 16px;
-            color: blue;
-            word-break: break-all;
+        #linkContainer {
+            text-align: center;
+            margin-top: 20px;
+            font-size: 18px;
         }
     </style>
-    <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 </head>
 <body>
     <h1>打分表</h1>
-
     <label>from 
         <input type="number" id="year" placeholder=""> 年 
         <input type="number" id="month" placeholder=""> 月 
@@ -99,91 +94,16 @@
 
     <div class="button-container">
         <button onclick="addRow()">增加一行</button>
+        <button onclick="saveData()">重要！请务必保存所写内容</button>
         <button onclick="exportToImage()">导出为图片</button>
-        <button onclick="generateLink()">保存并生成链接</button>
     </div>
 
-    <div class="link-container">
-        <p>请保存您的专属链接以便下次继续填写：</p>
-        <a id="generatedLink" href="#" target="_blank"></a>
+    <div id="linkContainer" class="hidden">
+        <p>请保存该链接以便下次继续填写：</p>
+        <p id="generatedLink"></p>
     </div>
 
-    <script>
-        // 自动生成唯一链接并保存数据到链接中
-        function generateLink() {
-            const rows = document.querySelectorAll("#scoreTable tbody tr");
-            const tableData = [];
-            rows.forEach(row => {
-                const cells = row.querySelectorAll("td");
-                const rowData = Array.from(cells).slice(1).map(cell => cell.innerText);
-                tableData.push(rowData);
-            });
-
-            const year = document.getElementById("year").value || '';
-            const month = document.getElementById("month").value || '';
-            const day = document.getElementById("day").value || '';
-
-            const data = {
-                date: { year, month, day },
-                table: tableData
-            };
-
-            const encodedData = encodeURIComponent(JSON.stringify(data));
-            const newUrl = `${window.location.origin}${window.location.pathname}?data=${encodedData}`;
-            
-            document.getElementById("generatedLink").href = newUrl;
-            document.getElementById("generatedLink").textContent = newUrl;
-        }
-
-        // 读取链接中的数据并还原表格
-        window.addEventListener('load', () => {
-            const urlParams = new URLSearchParams(window.location.search);
-            const data = urlParams.get('data');
-            if (data) {
-                const decodedData = JSON.parse(decodeURIComponent(data));
-
-                // 恢复日期
-                document.getElementById("year").value = decodedData.date.year || '';
-                document.getElementById("month").value = decodedData.date.month || '';
-                document.getElementById("day").value = decodedData.date.day || '';
-
-                // 恢复表格数据
-                const rows = document.querySelectorAll("#scoreTable tbody tr");
-                decodedData.table.forEach((rowData, index) => {
-                    if (index >= rows.length) addRow();
-                    const cells = document.querySelectorAll("#scoreTable tbody tr")[index].querySelectorAll("td");
-                    rowData.forEach((text, cellIndex) => {
-                        cells[cellIndex + 1].innerText = text;
-                    });
-                });
-            }
-        });
-
-        // 增加新行
-        function addRow() {
-            const table = document.getElementById('scoreTable').getElementsByTagName('tbody')[0];
-            const newRow = table.insertRow();
-            const rowCount = table.rows.length;
-
-            newRow.innerHTML = `
-                <td>${rowCount}</td>
-                <td contenteditable="true"></td>
-                <td contenteditable="true"></td>
-                <td contenteditable="true"></td>
-                <td contenteditable="true"></td>
-                <td contenteditable="true"></td>
-            `;
-        }
-
-        // 导出为图片
-        function exportToImage() {
-            html2canvas(document.body).then(canvas => {
-                const link = document.createElement('a');
-                link.download = '打分表.png';
-                link.href = canvas.toDataURL('image/png');
-                link.click();
-            });
-        }
-    </script>
+    <script src="script.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 </body>
 </html>
