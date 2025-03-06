@@ -36,8 +36,12 @@
         th {
             background-color: #f4f4f4;
         }
+        td {
+            height: auto;
+        }
         .button-container {
             margin-top: 10px;
+            text-align: center;
         }
         button {
             padding: 10px;
@@ -45,13 +49,15 @@
             cursor: pointer;
             margin-right: 10px;
         }
-        .hidden {
-            display: none;
-        }
         #linkContainer {
             text-align: center;
             margin-top: 20px;
+            display: none;
+        }
+        #shortLink {
             font-size: 18px;
+            color: blue;
+            word-break: break-all;
         }
     </style>
 </head>
@@ -94,16 +100,14 @@
 
     <div class="button-container">
         <button onclick="addRow()">增加一行</button>
-        <button onclick="saveData()">重要！请务必保存所写内容</button>
-        <button onclick="exportToImage()">导出为图片</button>
+        <button onclick="saveAndGenerateLink()">重要！请务必保存所写内容</button>
     </div>
 
-    <div id="linkContainer" class="hidden">
+    <div id="linkContainer">
         <p>请保存该链接以便下次继续填写：</p>
-        <p id="generatedLink"></p>
+        <a id="shortLink" href="#" target="_blank"></a>
     </div>
 
     <script src="script.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 </body>
 </html>
