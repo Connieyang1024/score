@@ -10,13 +10,8 @@
             background-color: white;
             padding: 20px;
         }
-        #capture {
-            background-color: white;
-            padding: 20px;
-        }
         h1 {
             text-align: center;
-            margin-bottom: 20px;
         }
         label {
             font-size: 18px;
@@ -25,8 +20,6 @@
             width: 60px;
             font-size: 16px;
             margin-right: 5px;
-            border: 1px solid #ccc;
-            padding: 5px;
         }
         table {
             width: 100%;
@@ -47,92 +40,77 @@
             height: auto;
         }
         .button-container {
-            margin-top: 20px;
+            margin-top: 10px;
         }
         button {
-            padding: 10px 20px;
+            padding: 10px;
             font-size: 16px;
             cursor: pointer;
             margin-right: 10px;
+        }
+        .link-container {
+            margin-top: 20px;
+        }
+        #generatedLink {
+            font-size: 16px;
+            color: blue;
+            word-break: break-all;
         }
     </style>
     <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 </head>
 <body>
-    <!-- 打分表 + 日期 -->
-    <div id="capture">
-        <h1>打分表</h1>
-        <label>from 
-            <input type="number" id="year"> 年 
-            <input type="number" id="month"> 月 
-            <input type="number" id="day"> 日
-        </label>
+    <h1>打分表</h1>
 
-        <table id="scoreTable">
-            <thead>
-                <tr>
-                    <th style="width: 5%;">序号</th>
-                    <th style="width: 20%;">宝宝问题</th>
-                    <th style="width: 25%; color: red;">错误行为</th>
-                    <th style="width: 25%; color: blue;">正确做法</th>
-                    <th style="width: 12.5%;">姥姥/奶奶</th>
-                    <th style="width: 12.5%;">姥爷/爷爷</th>
-                </tr>
-            </thead>
-            <tbody id="tableBody">
-            </tbody>
-        </table>
-    </div>
+    <label>from 
+        <input type="number" id="year" placeholder=""> 年 
+        <input type="number" id="month" placeholder=""> 月 
+        <input type="number" id="day" placeholder=""> 日
+    </label>
 
-    <!-- 按钮 -->
+    <table id="scoreTable">
+        <thead>
+            <tr>
+                <th style="width: 5%;">序号</th>
+                <th style="width: 20%;">宝宝问题</th>
+                <th style="width: 25%; color: red;">错误行为</th>
+                <th style="width: 25%; color: blue;">正确做法</th>
+                <th style="width: 12.5%;">姥姥/奶奶</th>
+                <th style="width: 12.5%;">姥爷/爷爷</th>
+            </tr>
+        </thead>
+        <tbody>
+            <script>
+                for (let i = 1; i <= 17; i++) {
+                    document.write(`
+                        <tr>
+                            <td>${i}</td>
+                            <td contenteditable="true"></td>
+                            <td contenteditable="true"></td>
+                            <td contenteditable="true"></td>
+                            <td contenteditable="true"></td>
+                            <td contenteditable="true"></td>
+                        </tr>
+                    `);
+                }
+            </script>
+        </tbody>
+    </table>
+
     <div class="button-container">
         <button onclick="addRow()">增加一行</button>
         <button onclick="exportToImage()">导出为图片</button>
+        <button onclick="generateLink()">保存并生成链接</button>
+    </div>
+
+    <div class="link-container">
+        <p>请保存您的专属链接以便下次继续填写：</p>
+        <a id="generatedLink" href="#" target="_blank"></a>
     </div>
 
     <script>
-        // 初始化表格数据
-        window.addEventListener('load', () => {
-            const savedData = JSON.parse(localStorage.getItem('scoreTableData')) || [];
-            const tableBody = document.getElementById('tableBody');
-            tableBody.innerHTML = '';
-            
-            if (savedData.length === 0) {
-                for (let i = 1; i <= 17; i++) {
-                    addRow(i);
-                }
-            } else {
-                savedData.forEach((rowData, index) => {
-                    addRow(index + 1, rowData);
-                });
-            }
-        });
-
-        // 自动保存数据
-        document.addEventListener('input', () => {
-            saveTableData();
-        });
-
-        // 增加新行
-        function addRow(number = null, rowData = ['', '', '', '', '']) {
-            const table = document.getElementById('scoreTable').getElementsByTagName('tbody')[0];
-            const rowCount = table.rows.length + 1;
-            const newRow = table.insertRow();
-
-            newRow.innerHTML = `
-                <td>${number || rowCount}</td>
-                <td contenteditable="true">${rowData[0]}</td>
-                <td contenteditable="true">${rowData[1]}</td>
-                <td contenteditable="true">${rowData[2]}</td>
-                <td contenteditable="true">${rowData[3]}</td>
-                <td contenteditable="true">${rowData[4]}</td>
-            `;
-
-            saveTableData();
-        }
-
-        // 保存表格数据到localStorage
-        function saveTableData() {
+        // 自动生成唯一链接并保存数据到链接中
+        function generateLink() {
             const rows = document.querySelectorAll("#scoreTable tbody tr");
             const tableData = [];
             rows.forEach(row => {
@@ -140,13 +118,66 @@
                 const rowData = Array.from(cells).slice(1).map(cell => cell.innerText);
                 tableData.push(rowData);
             });
-            localStorage.setItem('scoreTableData', JSON.stringify(tableData));
+
+            const year = document.getElementById("year").value || '';
+            const month = document.getElementById("month").value || '';
+            const day = document.getElementById("day").value || '';
+
+            const data = {
+                date: { year, month, day },
+                table: tableData
+            };
+
+            const encodedData = encodeURIComponent(JSON.stringify(data));
+            const newUrl = `${window.location.origin}${window.location.pathname}?data=${encodedData}`;
+            
+            document.getElementById("generatedLink").href = newUrl;
+            document.getElementById("generatedLink").textContent = newUrl;
+        }
+
+        // 读取链接中的数据并还原表格
+        window.addEventListener('load', () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            const data = urlParams.get('data');
+            if (data) {
+                const decodedData = JSON.parse(decodeURIComponent(data));
+
+                // 恢复日期
+                document.getElementById("year").value = decodedData.date.year || '';
+                document.getElementById("month").value = decodedData.date.month || '';
+                document.getElementById("day").value = decodedData.date.day || '';
+
+                // 恢复表格数据
+                const rows = document.querySelectorAll("#scoreTable tbody tr");
+                decodedData.table.forEach((rowData, index) => {
+                    if (index >= rows.length) addRow();
+                    const cells = document.querySelectorAll("#scoreTable tbody tr")[index].querySelectorAll("td");
+                    rowData.forEach((text, cellIndex) => {
+                        cells[cellIndex + 1].innerText = text;
+                    });
+                });
+            }
+        });
+
+        // 增加新行
+        function addRow() {
+            const table = document.getElementById('scoreTable').getElementsByTagName('tbody')[0];
+            const newRow = table.insertRow();
+            const rowCount = table.rows.length;
+
+            newRow.innerHTML = `
+                <td>${rowCount}</td>
+                <td contenteditable="true"></td>
+                <td contenteditable="true"></td>
+                <td contenteditable="true"></td>
+                <td contenteditable="true"></td>
+                <td contenteditable="true"></td>
+            `;
         }
 
         // 导出为图片
         function exportToImage() {
-            const capture = document.getElementById('capture');
-            html2canvas(capture).then(canvas => {
+            html2canvas(document.body).then(canvas => {
                 const link = document.createElement('a');
                 link.download = '打分表.png';
                 link.href = canvas.toDataURL('image/png');
