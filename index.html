@@ -7,8 +7,8 @@
     <style>
         body {
             font-family: Arial, sans-serif;
-            background-color: white;
             padding: 20px;
+            background-color: white;
         }
         h1 {
             text-align: center;
@@ -36,48 +36,45 @@
         th {
             background-color: #f4f4f4;
         }
-        td {
-            height: auto;
-        }
         .button-container {
-            margin-top: 10px;
+            margin-top: 20px;
             text-align: center;
         }
         button {
-            padding: 10px;
+            padding: 10px 20px;
             font-size: 16px;
             cursor: pointer;
             margin-right: 10px;
         }
-        #linkContainer {
+        .link-container {
+            display: none;
             text-align: center;
             margin-top: 20px;
-            display: none;
         }
-        #shortLink {
+        .link-container p {
             font-size: 18px;
-            color: blue;
-            word-break: break-all;
+            font-weight: bold;
         }
-        .modal {
+        #generatedLink {
+            word-break: break-all;
+            color: blue;
+            text-decoration: underline;
+            cursor: pointer;
+        }
+        .hidden {
             display: none;
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background: white;
-            padding: 20px;
-            border: 2px solid #000;
-            z-index: 1000;
         }
     </style>
+    <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 </head>
 <body>
+
     <h1>打分表</h1>
+    
     <label>from 
-        <input type="number" id="year" placeholder=""> 年 
-        <input type="number" id="month" placeholder=""> 月 
-        <input type="number" id="day" placeholder=""> 日
+        <input type="number" id="year"> 年 
+        <input type="number" id="month"> 月 
+        <input type="number" id="day"> 日
     </label>
 
     <table id="scoreTable">
@@ -111,19 +108,98 @@
 
     <div class="button-container">
         <button onclick="addRow()">增加一行</button>
-        <button onclick="saveAndGenerateLink()">重要！请务必保存所写内容</button>
+        <button onclick="generateLink()">重要！请务必保存所写内容</button>
+        <button onclick="exportToImage()">导出为图片</button>
     </div>
 
-    <div id="linkContainer">
+    <div class="link-container" id="linkContainer">
         <p>请保存该链接以便下次继续填写：</p>
-        <a id="shortLink" href="#" target="_blank"></a>
+        <a id="generatedLink" target="_blank"></a>
     </div>
 
-    <div id="modal" class="modal">
-        <p>请保存该链接以便下次继续填写：</p>
-        <a id="modalLink" href="#" target="_blank"></a>
-    </div>
+    <script>
+        // 自动保存功能
+        document.addEventListener('input', () => {
+            const rows = document.querySelectorAll("#scoreTable tbody tr");
+            const tableData = [];
+            rows.forEach(row => {
+                const cells = row.querySelectorAll("td");
+                const rowData = Array.from(cells).slice(1).map(cell => cell.innerText);
+                tableData.push(rowData);
+            });
+            localStorage.setItem('scoreTableData', JSON.stringify(tableData));
+        });
 
-    <script src="script.js"></script>
+        // 恢复保存的数据
+        window.addEventListener('load', () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            const data = urlParams.get('data');
+            if (data) {
+                const savedData = JSON.parse(atob(data));
+                loadTableData(savedData);
+            }
+        });
+
+        function loadTableData(data) {
+            const rows = document.querySelectorAll("#scoreTable tbody tr");
+            data.forEach((rowData, index) => {
+                if (rows[index]) {
+                    const cells = rows[index].querySelectorAll("td");
+                    rowData.forEach((text, cellIndex) => {
+                        cells[cellIndex + 1].innerText = text;
+                    });
+                }
+            });
+        }
+
+        // 增加新行
+        function addRow() {
+            const table = document.getElementById('scoreTable').getElementsByTagName('tbody')[0];
+            const newRow = table.insertRow();
+            const rowCount = table.rows.length;
+
+            newRow.innerHTML = `
+                <td>${rowCount}</td>
+                <td contenteditable="true"></td>
+                <td contenteditable="true"></td>
+                <td contenteditable="true"></td>
+                <td contenteditable="true"></td>
+                <td contenteditable="true"></td>
+            `;
+        }
+
+        // 生成短链接
+        function generateLink() {
+            const rows = document.querySelectorAll("#scoreTable tbody tr");
+            const tableData = [];
+
+            rows.forEach(row => {
+                const cells = row.querySelectorAll("td");
+                const rowData = Array.from(cells).slice(1).map(cell => cell.innerText);
+                tableData.push(rowData);
+            });
+
+            const data = btoa(JSON.stringify(tableData));
+            const baseUrl = window.location.origin + window.location.pathname;
+            const fullUrl = `${baseUrl}?data=${data}`;
+
+            document.getElementById('generatedLink').textContent = fullUrl;
+            document.getElementById('generatedLink').href = fullUrl;
+
+            document.getElementById('linkContainer').style.display = 'block';
+        }
+
+        // 导出为图片
+        function exportToImage() {
+            const table = document.getElementById('scoreTable');
+            html2canvas(table).then(canvas => {
+                const link = document.createElement('a');
+                link.download = '打分表.png';
+                link.href = canvas.toDataURL('image/png');
+                link.click();
+            });
+        }
+    </script>
+
 </body>
 </html>
