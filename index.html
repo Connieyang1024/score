@@ -7,8 +7,8 @@
     <style>
         body {
             font-family: Arial, sans-serif;
-            padding: 20px;
             background-color: white;
+            padding: 20px;
         }
         h1 {
             text-align: center;
@@ -36,8 +36,11 @@
         th {
             background-color: #f4f4f4;
         }
+        td {
+            height: auto;
+        }
         .button-container {
-            margin-top: 20px;
+            margin-top: 10px;
             text-align: center;
         }
         button {
@@ -46,35 +49,31 @@
             cursor: pointer;
             margin-right: 10px;
         }
-        .link-container {
+        #linkModal {
             display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: white;
+            padding: 20px;
+            border: 1px solid #000;
+            box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.5);
+            z-index: 1000;
             text-align: center;
-            margin-top: 20px;
         }
-        .link-container p {
-            font-size: 18px;
-            font-weight: bold;
-        }
-        #generatedLink {
+        #linkModal a {
             word-break: break-all;
             color: blue;
-            text-decoration: underline;
-            cursor: pointer;
-        }
-        .hidden {
-            display: none;
         }
     </style>
-    <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 </head>
 <body>
-
     <h1>打分表</h1>
-    
     <label>from 
-        <input type="number" id="year"> 年 
-        <input type="number" id="month"> 月 
-        <input type="number" id="day"> 日
+        <input type="number" id="year" placeholder=""> 年 
+        <input type="number" id="month" placeholder=""> 月 
+        <input type="number" id="day" placeholder=""> 日
     </label>
 
     <table id="scoreTable">
@@ -108,56 +107,23 @@
 
     <div class="button-container">
         <button onclick="addRow()">增加一行</button>
-        <button onclick="generateLink()">重要！请务必保存所写内容</button>
-        <button onclick="exportToImage()">导出为图片</button>
+        <button onclick="saveData()">重要！请务必保存所写内容</button>
     </div>
 
-    <div class="link-container" id="linkContainer">
+    <!-- 弹窗提示框 -->
+    <div id="linkModal">
         <p>请保存该链接以便下次继续填写：</p>
-        <a id="generatedLink" target="_blank"></a>
+        <a id="generatedLink" href="#" target="_blank"></a>
+        <br><br>
+        <button onclick="closeModal()">关闭</button>
     </div>
 
     <script>
-        // 自动保存功能
-        document.addEventListener('input', () => {
-            const rows = document.querySelectorAll("#scoreTable tbody tr");
-            const tableData = [];
-            rows.forEach(row => {
-                const cells = row.querySelectorAll("td");
-                const rowData = Array.from(cells).slice(1).map(cell => cell.innerText);
-                tableData.push(rowData);
-            });
-            localStorage.setItem('scoreTableData', JSON.stringify(tableData));
-        });
-
-        // 恢复保存的数据
-        window.addEventListener('load', () => {
-            const urlParams = new URLSearchParams(window.location.search);
-            const data = urlParams.get('data');
-            if (data) {
-                const savedData = JSON.parse(atob(data));
-                loadTableData(savedData);
-            }
-        });
-
-        function loadTableData(data) {
-            const rows = document.querySelectorAll("#scoreTable tbody tr");
-            data.forEach((rowData, index) => {
-                if (rows[index]) {
-                    const cells = rows[index].querySelectorAll("td");
-                    rowData.forEach((text, cellIndex) => {
-                        cells[cellIndex + 1].innerText = text;
-                    });
-                }
-            });
-        }
-
         // 增加新行
         function addRow() {
             const table = document.getElementById('scoreTable').getElementsByTagName('tbody')[0];
             const newRow = table.insertRow();
             const rowCount = table.rows.length;
-
             newRow.innerHTML = `
                 <td>${rowCount}</td>
                 <td contenteditable="true"></td>
@@ -168,38 +134,55 @@
             `;
         }
 
-        // 生成短链接
-        function generateLink() {
+        // 保存数据并生成短链接
+        function saveData() {
             const rows = document.querySelectorAll("#scoreTable tbody tr");
             const tableData = [];
-
             rows.forEach(row => {
                 const cells = row.querySelectorAll("td");
                 const rowData = Array.from(cells).slice(1).map(cell => cell.innerText);
                 tableData.push(rowData);
             });
 
-            const data = btoa(JSON.stringify(tableData));
+            const data = btoa(JSON.stringify(tableData)); // base64编码
+            const shortData = data.slice(0, 20); // 截取前20位作为简短编码
             const baseUrl = window.location.origin + window.location.pathname;
-            const fullUrl = `${baseUrl}?data=${data}`;
+            const link = `${baseUrl}?data=${shortData}`;
 
-            document.getElementById('generatedLink').textContent = fullUrl;
-            document.getElementById('generatedLink').href = fullUrl;
-
-            document.getElementById('linkContainer').style.display = 'block';
+            // 显示弹窗并提供链接
+            const linkModal = document.getElementById('linkModal');
+            const linkElement = document.getElementById('generatedLink');
+            linkElement.href = link;
+            linkElement.textContent = link;
+            linkModal.style.display = 'block';
         }
 
-        // 导出为图片
-        function exportToImage() {
-            const table = document.getElementById('scoreTable');
-            html2canvas(table).then(canvas => {
-                const link = document.createElement('a');
-                link.download = '打分表.png';
-                link.href = canvas.toDataURL('image/png');
-                link.click();
-            });
+        // 关闭弹窗
+        function closeModal() {
+            document.getElementById('linkModal').style.display = 'none';
         }
+
+        // 页面加载时检查是否有数据
+        window.addEventListener('load', () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            const data = urlParams.get('data');
+            if (data) {
+                try {
+                    const decodedData = JSON.parse(atob(data));
+                    const rows = document.querySelectorAll("#scoreTable tbody tr");
+                    decodedData.forEach((rowData, index) => {
+                        if (rows[index]) {
+                            const cells = rows[index].querySelectorAll("td");
+                            rowData.forEach((text, cellIndex) => {
+                                cells[cellIndex + 1].innerText = text;
+                            });
+                        }
+                    });
+                } catch (error) {
+                    console.error('数据解析失败', error);
+                }
+            }
+        });
     </script>
-
 </body>
 </html>
