@@ -26,33 +26,34 @@ function saveAndGenerateLink() {
     });
 
     const data = JSON.stringify(tableData);
-    const encodedData = encodeURIComponent(data);
-    const uniqueKey = Date.now(); // 确保每次都有唯一标识
-
-    // 生成带数据的链接
+    const encodedData = btoa(data); // Base64编码
     const baseUrl = window.location.origin + window.location.pathname;
-    const fullLink = `${baseUrl}?data=${encodedData}&key=${uniqueKey}`;
 
-    // 显示短链接
+    // 短链接形式
+    const fullLink = `${baseUrl}?data=${encodedData}`;
     const shortLink = fullLink.length > 60 ? fullLink.slice(0, 60) + "..." : fullLink;
 
+    // 更新并显示链接
     document.getElementById("shortLink").href = fullLink;
     document.getElementById("shortLink").textContent = shortLink;
     document.getElementById("linkContainer").style.display = "block";
 
-    alert("请保存该链接以便下次继续填写！");
+    // 弹出框展示完整链接
+    document.getElementById("modalLink").href = fullLink;
+    document.getElementById("modalLink").textContent = fullLink;
+    document.getElementById("modal").style.display = "block";
 }
 
 // 页面加载时读取数据
 window.addEventListener('load', () => {
     const urlParams = new URLSearchParams(window.location.search);
-    const data = urlParams.get('data');
+    const encodedData = urlParams.get('data');
 
-    if (data) {
-        const savedData = JSON.parse(decodeURIComponent(data));
+    if (encodedData) {
+        const decodedData = JSON.parse(atob(encodedData));
         const rows = document.querySelectorAll("#scoreTable tbody tr");
 
-        savedData.forEach((rowData, index) => {
+        decodedData.forEach((rowData, index) => {
             const cells = rows[index]?.querySelectorAll("td");
             rowData.forEach((text, cellIndex) => {
                 if (cells && cells[cellIndex + 1]) {
