@@ -7,8 +7,8 @@
     <style>
         body {
             font-family: Arial, sans-serif;
-            background-color: white;
             padding: 20px;
+            background-color: white;
         }
         h1 {
             text-align: center;
@@ -31,13 +31,9 @@
             border: 1px solid #000;
             padding: 10px;
             text-align: center;
-            vertical-align: top;
         }
         th {
             background-color: #f4f4f4;
-        }
-        td {
-            height: auto;
         }
         .button-container {
             margin-top: 10px;
@@ -49,9 +45,6 @@
             cursor: pointer;
             margin: 5px;
         }
-        .hidden {
-            display: none;
-        }
         .link-popup {
             display: none;
             position: fixed;
@@ -61,13 +54,21 @@
             padding: 20px;
             background-color: white;
             border: 2px solid #000;
-            z-index: 1000;
             text-align: center;
+            z-index: 1000;
         }
         .link-popup a {
-            word-break: break-all;
             color: blue;
             text-decoration: underline;
+            word-break: break-all;
+        }
+        .close-btn {
+            margin-top: 15px;
+            padding: 5px 10px;
+            background-color: #f44336;
+            color: white;
+            border: none;
+            cursor: pointer;
         }
     </style>
     <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
@@ -118,10 +119,12 @@
     <div id="linkPopup" class="link-popup">
         <p>请保存该链接以便下次继续填写：</p>
         <a id="generatedLink" href="#" target="_blank"></a>
+        <br>
+        <button class="close-btn" onclick="closePopup()">关闭</button>
     </div>
 
     <script>
-        // 读取URL中的数据并加载到表格中
+        // 页面加载时读取数据
         window.onload = function() {
             const urlParams = new URLSearchParams(window.location.search);
             const data = urlParams.get('data');
@@ -135,10 +138,12 @@
         function saveAndGenerateLink() {
             const tableData = getTableData();
             const encodedData = btoa(JSON.stringify(tableData));
-            const link = `${window.location.origin}${window.location.pathname}?data=${encodedData}`;
+            const shortLink = `${window.location.origin}${window.location.pathname}?data=${encodedData.slice(0, 10)}`;
 
-            document.getElementById('generatedLink').textContent = link;
-            document.getElementById('generatedLink').href = link;
+            const generatedLink = document.getElementById('generatedLink');
+            generatedLink.textContent = shortLink;
+            generatedLink.href = shortLink;
+
             document.getElementById('linkPopup').style.display = 'block';
         }
 
@@ -192,6 +197,11 @@
                 link.href = canvas.toDataURL('image/png');
                 link.click();
             });
+        }
+
+        // 关闭弹窗
+        function closePopup() {
+            document.getElementById('linkPopup').style.display = 'none';
         }
     </script>
 </body>
