@@ -48,20 +48,13 @@
             cursor: pointer;
             margin-right: 10px;
         }
-        .hidden {
-            display: none;
+        .link-container {
+            margin-top: 20px;
         }
-        #linkPopup {
-            display: none;
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background-color: white;
-            padding: 20px;
-            border: 1px solid #000;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
-            z-index: 1000;
+        #generatedLink {
+            font-size: 16px;
+            color: blue;
+            word-break: break-all;
         }
     </style>
     <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
@@ -107,23 +100,22 @@
     <div class="button-container">
         <button onclick="addRow()">增加一行</button>
         <button onclick="exportToImage()">导出为图片</button>
-        <button onclick="generateLink()">重要！请务必保存所写内察</button>
+        <button onclick="generateLink()">保存并生成链接</button>
     </div>
 
-    <div id="linkPopup">
-        <p>请保存该链接以便下次继续填写：</p>
-        <p id="generatedLink"></p>
-        <button onclick="closePopup()">关闭</button>
+    <div class="link-container">
+        <p>请保存您的专属链接以便下次继续填写：</p>
+        <a id="generatedLink" href="#" target="_blank"></a>
     </div>
 
     <script>
-        // 生成简洁链接
+        // 自动生成唯一链接并保存数据到链接中
         function generateLink() {
             const rows = document.querySelectorAll("#scoreTable tbody tr");
             const tableData = [];
             rows.forEach(row => {
                 const cells = row.querySelectorAll("td");
-                const rowData = Array.from(cells).slice(1).map(cell => cell.innerText.trim());
+                const rowData = Array.from(cells).slice(1).map(cell => cell.innerText);
                 tableData.push(rowData);
             });
 
@@ -136,24 +128,26 @@
                 table: tableData
             };
 
-            const compressedData = btoa(encodeURIComponent(JSON.stringify(data)));
-            const shortLink = `${window.location.origin}${window.location.pathname}?d=${compressedData.slice(0, 20)}`; // 简短链接
-
-            document.getElementById('generatedLink').innerText = shortLink;
-            document.getElementById('linkPopup').style.display = 'block';
+            const encodedData = encodeURIComponent(JSON.stringify(data));
+            const newUrl = `${window.location.origin}${window.location.pathname}?data=${encodedData}`;
+            
+            document.getElementById("generatedLink").href = newUrl;
+            document.getElementById("generatedLink").textContent = newUrl;
         }
 
-        // 读取数据
+        // 读取链接中的数据并还原表格
         window.addEventListener('load', () => {
             const urlParams = new URLSearchParams(window.location.search);
-            const data = urlParams.get('d');
+            const data = urlParams.get('data');
             if (data) {
-                const decodedData = JSON.parse(decodeURIComponent(atob(data + "=="))); // 补齐base64缺失的=
-                
+                const decodedData = JSON.parse(decodeURIComponent(data));
+
+                // 恢复日期
                 document.getElementById("year").value = decodedData.date.year || '';
                 document.getElementById("month").value = decodedData.date.month || '';
                 document.getElementById("day").value = decodedData.date.day || '';
 
+                // 恢复表格数据
                 const rows = document.querySelectorAll("#scoreTable tbody tr");
                 decodedData.table.forEach((rowData, index) => {
                     if (index >= rows.length) addRow();
@@ -181,27 +175,14 @@
             `;
         }
 
-        // 导出图片
+        // 导出为图片
         function exportToImage() {
-            // 隐藏按钮
-            document.querySelector('.button-container').classList.add('hidden');
-            document.getElementById('linkPopup').classList.add('hidden');
-            
             html2canvas(document.body).then(canvas => {
                 const link = document.createElement('a');
                 link.download = '打分表.png';
                 link.href = canvas.toDataURL('image/png');
                 link.click();
-
-                // 恢复按钮
-                document.querySelector('.button-container').classList.remove('hidden');
-                document.getElementById('linkPopup').classList.remove('hidden');
             });
-        }
-
-        // 关闭弹窗
-        function closePopup() {
-            document.getElementById('linkPopup').style.display = 'none';
         }
     </script>
 </body>
